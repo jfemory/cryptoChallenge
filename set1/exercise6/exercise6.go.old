@@ -1,0 +1,248 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"sort"
+)
+
+//type KeySize struct {
+//	Size  int
+//	Score float64
+//}
+
+type KeysizeScore struct {
+	Keysize int
+	Score   float64
+}
+
+type isHit struct {
+	BlockSize int
+	isHit     bool
+}
+
+func main() {
+	bigInput := openFile("6.txt")
+	raw := flattenMe(bigInput)
+	bigKeys := buildBlockArrayArray(raw)
+	scored := keysizeScore(bigKeys)
+	asciiTable := buildASCIItable()
+	sort.Slice(scored, func(i, j int) bool { return scored[i].Score < scored[j].Score })
+	for i := 0; i < len(scored); i++ {
+		checkBlockForEng(bigKeys[i], asciiTable, 0.5)
+	}
+	//fmt.Println(raw)
+	//fmt.Println(bigInput)
+}
+
+//checkBlockForEng takes the first entry from each block of a given length and SingleByte Xor's it.
+//if the score is good enough, it reports a hit. Else, it reports a miss. Takes threshold arg.
+func checkBlockForEng(input [][]byte, ascii []byte, threshold float32) isHit {
+	output := isHit{0, false}
+	permutedBlock := make([]byte, len(input))
+	for i := 0; i < len(input); i++ {
+		permutedBlock[i] = input[i][1]
+	}
+	fmt.Println(len(input[1]))
+	fmt.Println(scoreIt(permutedBlock, ascii))
+	return output
+}
+
+//keysizeScore takes a blockarray and returns an array of scorred keysizeScore
+func keysizeScore(a [][][]byte) []KeysizeScore {
+	output := make([]KeysizeScore, len(a))
+	for i := 0; i < len(a); i++ {
+		output[i].Keysize = len(a[i][1])
+		output[i].Score = scoreBlockArray(a[i])
+	}
+	return output
+}
+
+//scoreBlockArray takes a [][]byte and returns a float64 which is the score of
+//the normalized Hamming distance per keysize
+func scoreBlockArray(a [][]byte) float64 {
+	score := 0
+	n := 0
+	for i := 0; i < len(a); i++ {
+		for j := 0; j < len(a); j++ {
+			if j <= i {
+			} else {
+				score = score + hammIt(a[j], a[i])
+				n++
+			}
+		}
+	}
+	return (float64(score) / float64(n*len(a[1])))
+}
+
+//buildBigKeyArray takes a []byte and returns [][][]byte of key lengths 2
+//through 40
+func buildBlockArrayArray(a []byte) [][][]byte {
+	output := make([][][]byte, 39)
+	//loop over keysize range, 2-40 bytes
+	for i := 0; i <= 38; i++ {
+		keysize := i + 2
+		middleLength := 0
+		if len(a)%keysize < 1 {
+			middleLength = (len(a) / keysize)
+		} else {
+			middleLength = (len(a) / keysize) + 1
+		}
+		blockArray := make([][]byte, middleLength)
+		m := 0
+		// build [][]byte out of test keylength
+		for j := 0; j < middleLength; j++ {
+			blockArray[j] = make([]byte, keysize)
+			for k := 0; k < keysize; k++ {
+				if m < len(a) {
+					blockArray[j][k] = a[m]
+				} else {
+					blockArray[j][k] = byte(0)
+				}
+				m++
+			}
+		}
+		output[i] = blockArray
+	}
+	return output
+}
+
+//hammIt returns the Hamming distance of two []byte s as an int
+func hammIt(a, b []byte) int {
+	hammDiff := 0
+	for i := 0; i < len(a); i++ {
+		abyte := a[i]
+		bbyte := b[i]
+		for j := 0; j < 8; j++ {
+			mask := byte(1 << uint(j))
+			if (abyte & mask) != (bbyte & mask) {
+				hammDiff++
+			}
+		}
+	}
+	return hammDiff
+}
+
+//
+// Some moving parts to make things play nice
+//
+//openFile opens a file into a [][]byte using lineCount
+func openFile(a string) [][]byte {
+	file, err := os.Open(a)
+	if err != nil {
+		fmt.Println("File Read Error")
+	}
+	scanner := bufio.NewScanner(file)
+	i := 0
+	linecount, _ := lineCount(a)
+	bigInput := make([][]byte, linecount)
+
+	for scanner.Scan() {
+		bigInput[i] = []byte(scanner.Text())
+		i++
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+	}
+	//Ok, here, we have bigInput, an array of byte arrays corresponding to the file.
+	return bigInput
+}
+
+//LineCount counts the lines of "filename"
+// https://stackoverflow.com/questions/29559358/count-lines-via-bufio
+// Thanks PeterCO
+func lineCount(filename string) (int64, error) {
+	lc := int64(0)
+	f, err := os.Open(filename)
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		lc++
+	}
+	return lc, s.Err()
+}
+
+//flattenMe takes a [][]byte and flattens it into a []byte with extra padding
+//of zeros at the end
+//Checked good
+func flattenMe(a [][]byte) []byte {
+	index := 0
+	output := make([]byte, (((len(a) - 1) * len(a[1])) + len(a[len(a)-1])))
+	for i := 0; i < len(a); i++ {
+		for j := 0; j < len(a[i]); j++ {
+			output[index] = a[i][j]
+			index++
+		}
+	}
+	return output
+}
+
+//factorial takes an int, n,  and returns n! as an int
+// Checked good through 20
+func factorial(n int) int {
+	out := 1
+	if n == 0 {
+		return 1
+	}
+	for i := n; i > 1; i-- {
+		out = i * out
+	}
+	return out
+}
+
+//nChoosek returns the binomial coefficient of two ints
+//Tested good through 20
+func nChoosek(n, k int) int {
+	out := factorial(n) / (factorial(k) * factorial(n-k))
+	return out
+}
+
+//buildASCIItable when called outputs a byte array of all valid english ascii characters with space
+func buildASCIItable() []byte {
+	var output []byte
+	output = make([]byte, 53)
+	for j := 0; j <= 25; j++ {
+		low := 65 + j
+		output[j] = byte(low)
+	}
+	for k := 26; k <= 51; k++ {
+		high := 71 + k
+		output[k] = byte(high)
+	}
+	output[52] = byte(32)
+	return output
+}
+
+//sbyteXORit takes a specific byte and a byte array. It returns the bytes
+//array that is XOR'd with the input byte.
+func sbyteXORit(a byte, b []byte) []byte {
+	length := len(b)
+	sbSlice := make([]byte, length)
+	for i := 0; i < length; i++ {
+		sbSlice[i] = a
+	}
+	out := make([]byte, length)
+	for j := 0; j < length; j++ {
+		out[j] = b[j] ^ sbSlice[j]
+	}
+	return out
+}
+
+//scoreIt takes a byte array and a byte array of acceptable values and returns
+//a score between 0 and 1.
+func scoreIt(input []byte, table []byte) float32 {
+	score := 0
+	for i := 0; i < len(table); i++ {
+		for j := 0; j < len(input); j++ {
+			if table[i] == input[j] {
+				score = score + 1
+			}
+		}
+	}
+	output := float32(score) / float32(len(input))
+	return output
+}
