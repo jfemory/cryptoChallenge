@@ -7,6 +7,13 @@ import (
 	"log"
 )
 
+//StringOut is a standard output struct that holds different types of StringOut.
+type StringOut struct {
+	ASCII  ASCIIstr
+	Hex    Hexstr
+	Base64 Base64str
+}
+
 func HexXOR(str1, str2 Hexstr) Hexstr {
 	a1, _ := hex.DecodeString(string(str1))
 	a2, _ := hex.DecodeString(string(str2))
@@ -38,4 +45,26 @@ func xorBytes(a1, a2 []byte) ([]byte, error) {
 		out[i] = v ^ a2[i]
 	}
 	return out, nil
+}
+
+type sbxorInterface interface {
+	sbXOR(b byte) StringOut
+}
+
+func (str Hexstr) sbXOR(b byte) StringOut {
+	input, err := hex.DecodeString(string(str))
+	if err != nil {
+		log.Fatalf("Problem converting from hex to byte.")
+	}
+	outBytes := make([]byte, len(input))
+	for i, v := range input {
+		outBytes[i] = v ^ b
+	}
+	out := StringOut{ASCIIstr(string(outBytes)), Hexstr(hex.EncodeToString(outBytes)), Base64str(base64.StdEncoding.EncodeToString(outBytes))}
+
+	return out
+}
+
+func SingleByteXOR(sbX sbxorInterface, b byte) StringOut {
+	return sbX.sbXOR(b)
 }

@@ -29,9 +29,10 @@ func (str Base64str) score() float64 {
 func scoreBytes(b []byte) float64 {
 	score := 0
 	for _, v := range b {
-		if (v > 64 && v < 91) || (v > 96 && v < 127) {
+		if (v > 64 && v < 91) || (v > 96 && v < 127) || (v == 32) {
 			score++
 		}
 	}
 	return (float64(score) / float64(len(b)))
+	//TODO: Write more tests and make more finegrained
 }

@@ -12,7 +12,7 @@ type scoreBytesVector struct {
 
 var EvalScoreBytes = []scoreBytesVector{
 	{[]byte{31, 65, 66}, 0.6666},
-	{[]byte{127, 126, 122, 111, 64, 37, 32, 12, 11, 10}, 0.3},
+	{[]byte{127, 126, 122, 111, 64, 37, 32, 12, 11, 10}, 0.4},
 }
 
 func TestScoreBytes(t *testing.T) {

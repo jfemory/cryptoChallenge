@@ -19,6 +19,9 @@ type Hexstr string
 //Base64str is a string of encoded base64.
 type Base64str string
 
+//ASCIIstr is a byte string represented as ASCII.
+type ASCIIstr string
+
 //Base64 is satisfied by Hexstr, ...
 type Base64 interface {
 	toBase64() Base64str
