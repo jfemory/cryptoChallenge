@@ -39,8 +39,6 @@ func ToHex(str Hex) Hexstr {
 	return str.toHex()
 }
 
-//ToHex takes a ToHex and returns a Hexstr
-
 //toBase64 (Hexstr) coverts a Hexstr to Base64str
 func (str Hexstr) toBase64() Base64str {
 	out, err := hex.DecodeString(string(str))
@@ -59,10 +57,4 @@ func checkError(message string, err error) {
 	if err != nil {
 		log.Fatal(message, err)
 	}
-}
-
-func ConvertMe(str Hexstr) Base64str {
-	out, err := hex.DecodeString(string(str))
-	checkError("Failed to convert hex to base64. ", err)
-	return Base64str(base64.StdEncoding.EncodeToString(out))
 }
