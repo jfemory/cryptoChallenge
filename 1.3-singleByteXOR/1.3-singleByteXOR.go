@@ -17,7 +17,6 @@ func main() {
 	score := 0.0
 	for i := 0; i < 256; i++ {
 		xored := c.SingleByteXOR(input, byte(i))
-		fmt.Println(xored)
 		tempScore := c.ScoreString(xored.Hex)
 		if score < tempScore {
 			score = tempScore

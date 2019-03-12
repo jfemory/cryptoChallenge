@@ -14,6 +14,31 @@ type StringOut struct {
 	Base64 Base64str
 }
 
+func RKXencrypt(str ASCIIstr, key ASCIIstr) Hexstr {
+	//prepare data
+	byteKeyShort := []byte(key)
+	byteString := []byte(str)
+	byteKeyLong := buildKey(byteKeyShort, byteString)
+	a, err := xorBytes(byteString, byteKeyLong)
+	out := hex.EncodeToString(a)
+	if err != nil {
+		log.Fatal("Panic", err)
+	}
+	return Hexstr(out)
+}
+
+func RKXdecrypt(input Hexstr, key ASCIIstr) ASCIIstr {
+	byteString, _ := hex.DecodeString(string(input))
+	byteKeyShort := []byte(key)
+	byteKeyLong := buildKey(byteKeyShort, byteString)
+	a, err := xorBytes(byteString, byteKeyLong)
+	out := string(a)
+	if err != nil {
+		log.Fatal("Panic", err)
+	}
+	return ASCIIstr(out)
+}
+
 func HexXOR(str1, str2 Hexstr) Hexstr {
 	a1, _ := hex.DecodeString(string(str1))
 	a2, _ := hex.DecodeString(string(str2))
@@ -23,6 +48,27 @@ func HexXOR(str1, str2 Hexstr) Hexstr {
 		log.Fatal("Panic", err)
 	}
 	return Hexstr(out)
+}
+
+func buildKey(key []byte, str []byte) []byte {
+	keyLength := len(key)
+	strLength := len(str)
+	out := make([]byte, strLength)
+	for i := 0; i < strLength; i++ {
+		out[i] = key[i%keyLength]
+	}
+	return out
+}
+
+func ASCIIXORHex(str1, str2 ASCIIstr) ASCIIstr {
+	a1 := []byte(str1)
+	a2 := []byte(str2)
+	a3, err := xorBytes(a1, a2)
+	out := hex.EncodeToString(a3)
+	if err != nil {
+		log.Fatal("Panic", err)
+	}
+	return ASCIIstr(out)
 }
 
 func Base64XOR(str1, str2 Base64str) Base64str {
@@ -38,7 +84,7 @@ func Base64XOR(str1, str2 Base64str) Base64str {
 
 func xorBytes(a1, a2 []byte) ([]byte, error) {
 	if len(a1) != len(a2) {
-		return make([]byte, 0), errors.New("xorBytes: mismatched byte slice lengths. ")
+		return make([]byte, 0), errors.New(" XOR Bytes: mismatched byte slice lengths. ")
 	}
 	out := make([]byte, len(a1))
 	for i, v := range a1 {
