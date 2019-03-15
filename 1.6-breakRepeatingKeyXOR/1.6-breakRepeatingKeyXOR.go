@@ -39,6 +39,7 @@ func main() {
 	key := scoreBlocks(splitBlocks, keysize)
 	fmt.Println(key)
 	fmt.Println(string(key))
+	fmt.Print(RKXdecrypt(cipher, key))
 }
 
 //FindKeySize guess the most likely keysize in a range for a presumed vigernere cipher bsed on the hamming distance of adjacent blocks of bytes.
@@ -101,7 +102,7 @@ func scoreBlocks(splitBlocks [][]byte, keysize int) []byte {
 		var score float64
 		var outKey byte
 		for key := 0; key < 256; key++ {
-			xored, _ := xorBytes(block, buildKey(byte(key), blockLength))
+			xored, _ := xorBytes(block, buildKeySB(byte(key), blockLength))
 			tempScore := scoreBytes(xored)
 			if tempScore > score {
 				score = tempScore
@@ -124,7 +125,7 @@ func scoreBytes(b []byte) float64 {
 	//TODO: Write more tests and make more finegrained
 }
 
-func buildKey(key byte, length int) []byte {
+func buildKeySB(key byte, length int) []byte {
 	out := make([]byte, length)
 	for i := 0; i < length; i++ {
 		out[i] = key
@@ -173,4 +174,24 @@ func xorBytes(a1, a2 []byte) ([]byte, error) {
 		out[i] = v ^ a2[i]
 	}
 	return out, nil
+}
+
+func RKXdecrypt(byteString []byte, byteKeyShort []byte) string {
+	byteKeyLong := buildKey(byteKeyShort, byteString)
+	a, err := xorBytes(byteString, byteKeyLong)
+	out := string(a)
+	if err != nil {
+		log.Fatal("Panic", err)
+	}
+	return out
+}
+
+func buildKey(key []byte, str []byte) []byte {
+	keyLength := len(key)
+	strLength := len(str)
+	out := make([]byte, strLength)
+	for i := 0; i < strLength; i++ {
+		out[i] = key[i%keyLength]
+	}
+	return out
 }
