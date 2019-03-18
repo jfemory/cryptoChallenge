@@ -13,13 +13,13 @@ import (
 )
 
 func main() {
-	var temp []byte
+	var temp []byte //hold the ciphertext, here
+	//open file of cipher text, load it into the variable, temp.
 	openFile, err := os.Open("6.txt")
 	checkError("Failed to open 6.txt ", err)
 	defer openFile.Close()
 
 	reader := bufio.NewReader(openFile)
-	//var out outputData
 	for {
 		line, isPrefix, error := reader.ReadLine()
 		if error == io.EOF {
@@ -28,13 +28,13 @@ func main() {
 		if isPrefix != false {
 			break
 		}
-		//do logic here
 		temp = append(temp, line...)
 	}
 	//convert base64 encoded string source file to []byte for further processing.
 	cipherString64 := string(temp)
 	cipher, _ := base64.StdEncoding.DecodeString(cipherString64)
 	keysize, _ := findKeySize(cipher, 2, 40)
+	fmt.Println(keysize)
 	splitBlocks, _ := splitIntoBlocks(cipher, keysize)
 	key := scoreBlocks(splitBlocks, keysize)
 	fmt.Println(key)
@@ -46,18 +46,19 @@ func main() {
 func findKeySize(cipher []byte, min, max int) (int, error) {
 	numberOfBlocks := 7
 	if len(cipher) < 4*max { //make sure cipher text is large enough to check for the max keysize guess.
-		return 0, errors.New("Max keysize too long to score. ")
+		return 1, errors.New("Max keysize too long to score. ")
 	}
-	var score float64
+	score := 999999.9
 	var keySize int
 
 	for keysize := min; keysize <= max; keysize++ {
 		blockedCipher := initCipherHolder(keysize, numberOfBlocks, cipher)
 		tempKeySize := keysize
 		tempScore := hammingHelper(blockedCipher)
-		if tempScore > score {
+		if tempScore < score {
 			keySize = tempKeySize
 			score = tempScore
+
 		}
 	}
 	return keySize, nil
@@ -76,6 +77,8 @@ func initCipherHolder(keysize, length int, cipher []byte) [][]byte {
 func splitIntoBlocks(cipher []byte, size int) ([][]byte, error) {
 	if len(cipher) < size {
 		return nil, errors.New("Cipher text is shorter than keyblock size. ")
+	} else if size == 0 {
+		size++
 	}
 	cipherSize := len(cipher) //length of cipher
 	out := makeBlankBlocks(size)
@@ -117,8 +120,14 @@ func scoreBlocks(splitBlocks [][]byte, keysize int) []byte {
 func scoreBytes(b []byte) float64 {
 	score := 0
 	for _, v := range b {
-		if (v > 64 && v < 91) || (v > 96 && v < 127) || (v == 32) {
+		if v > 64 && v < 91 {
 			score++
+		} else if (v > 96 && v <= 122) || (v == 32) {
+			score = score + 2
+		} else if (v == 127) || (v < 13) || (v > 13 && v < 32) {
+			score = score - 10
+		} else if (v > 32 && v < 64) || (v < 127 && v > 122) {
+			score = score - 1
 		}
 	}
 	return (float64(score) / float64(len(b)))
@@ -132,8 +141,6 @@ func buildKeySB(key byte, length int) []byte {
 	}
 	return out
 }
-
-//
 
 //checkError returns fatal and an error message, given by the string.
 func checkError(message string, err error) {
@@ -152,17 +159,17 @@ func hamming(a, b []byte) int {
 }
 
 func hammingHelper(blockedCipher [][]byte) float64 {
-	var hammingCounter float64
+	var hammingCounter int
 	counter := 0
 	keysize := len(blockedCipher[0])
 	for i := 0; i < len(blockedCipher)-1; i++ {
 		for j := i + 1; j < len(blockedCipher); j++ {
 			hammingScore := hamming(blockedCipher[i], blockedCipher[j])
-			hammingCounter = hammingCounter + (float64(hammingScore) / float64(keysize))
+			hammingCounter = hammingCounter + hammingScore
 			counter++
 		}
 	}
-	return (hammingCounter / float64(counter))
+	return (float64(hammingCounter) / float64(keysize))
 }
 
 func xorBytes(a1, a2 []byte) ([]byte, error) {
