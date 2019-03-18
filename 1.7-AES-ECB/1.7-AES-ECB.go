@@ -9,18 +9,19 @@ import (
 )
 
 func main() {
-	key := []byte("YELLOW SUBMARINE")
+	key := []byte("YELLOW SUBMARINE") //16 byte key selects AES-128.
 	block, _ := aes.NewCipher(key)
-	cipher := lib.ImportBase64("7.txt")
-	splitCipher, _ := splitIntoBlocks(cipher, len(key))
-	iv := splitCipher[0]
-	splitCipher = splitCipher[1:]
-	for i, split := range splitCipher {
-		mode := cipher.NewCBCDecrypter(block, iv)
-		mode.CryptoBlocks(split, split)
-		fmt.Println(block)
-	}
+	cipherText := lib.ImportBase64("7.txt")
 
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(cipherText) < aes.BlockSize {
+		panic("ciphertext too short")
+	}
+	//iv := cipherText[:aes.BlockSize]
+	mode := lib.NewECBDecrypter(block)
+	mode.CryptBlocks(cipherText, cipherText)
+	fmt.Println(string(cipherText))
 }
 
 func splitIntoBlocks(cipher []byte, size int) ([][]byte, error) {
