@@ -1,38 +1,17 @@
 package main
 
 import (
-	"bufio"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/bits"
-	"os"
+
+	"github.com/jfemory/cryptoChallenge/lib"
 	// c for crypto
 )
 
 func main() {
-	var temp []byte //hold the ciphertext, here
-	//open file of cipher text, load it into the variable, temp.
-	openFile, err := os.Open("6.txt")
-	checkError("Failed to open 6.txt ", err)
-	defer openFile.Close()
-
-	reader := bufio.NewReader(openFile)
-	for {
-		line, isPrefix, error := reader.ReadLine()
-		if error == io.EOF {
-			break
-		}
-		if isPrefix != false {
-			break
-		}
-		temp = append(temp, line...)
-	}
-	//convert base64 encoded string source file to []byte for further processing.
-	cipherString64 := string(temp)
-	cipher, _ := base64.StdEncoding.DecodeString(cipherString64)
+	cipher := lib.ImportBase64("6.txt")
 	keysize, _ := findKeySize(cipher, 2, 40)
 	fmt.Println(keysize)
 	splitBlocks, _ := splitIntoBlocks(cipher, keysize)
