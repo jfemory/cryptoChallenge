@@ -12,7 +12,7 @@ type scoredKeySize struct {
 
 //Hamming calculates the hamming distance between two byte slices.
 func Hamming(a, b []byte) int {
-	xored, _ := xorBytes(a, b)
+	xored, _ := XorBytes(a, b)
 	var out int
 	for _, v := range xored {
 		out = out + bits.OnesCount(uint(v))
@@ -29,7 +29,7 @@ func FindKeySize(cipher []byte, min, max int) (int, error) {
 	var key scoredKeySize
 	for keysize := min; keysize <= max; keysize++ {
 		blockedCipher := initCipherHolder(keysize, numberOfBlocks, cipher)
-		tempKey := scoredKeySize{keysize, hammingHelper(blockedCipher)}
+		tempKey := scoredKeySize{keysize, HammingScore(blockedCipher)}
 		if tempKey.normScore > key.normScore {
 			key = tempKey
 		}
@@ -47,7 +47,8 @@ func initCipherHolder(keysize, length int, cipher []byte) [][]byte {
 	return out
 }
 
-func hammingHelper(blockedCipher [][]byte) float64 {
+//HammingScore returns the normalized hamming score of a slice of byte slices.
+func HammingScore(blockedCipher [][]byte) float64 {
 	var hammingCounter float64
 	counter := 0
 	keysize := len(blockedCipher[0])

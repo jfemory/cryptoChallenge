@@ -19,7 +19,7 @@ func RKXencrypt(str ASCIIstr, key ASCIIstr) Hexstr {
 	byteKeyShort := []byte(key)
 	byteString := []byte(str)
 	byteKeyLong := buildKey(byteKeyShort, byteString)
-	a, err := xorBytes(byteString, byteKeyLong)
+	a, err := XorBytes(byteString, byteKeyLong)
 	out := hex.EncodeToString(a)
 	if err != nil {
 		log.Fatal("Panic", err)
@@ -31,7 +31,7 @@ func RKXdecrypt(input Hexstr, key ASCIIstr) ASCIIstr {
 	byteString, _ := hex.DecodeString(string(input))
 	byteKeyShort := []byte(key)
 	byteKeyLong := buildKey(byteKeyShort, byteString)
-	a, err := xorBytes(byteString, byteKeyLong)
+	a, err := XorBytes(byteString, byteKeyLong)
 	out := string(a)
 	if err != nil {
 		log.Fatal("Panic", err)
@@ -42,7 +42,7 @@ func RKXdecrypt(input Hexstr, key ASCIIstr) ASCIIstr {
 func HexXOR(str1, str2 Hexstr) Hexstr {
 	a1, _ := hex.DecodeString(string(str1))
 	a2, _ := hex.DecodeString(string(str2))
-	a3, err := xorBytes(a1, a2)
+	a3, err := XorBytes(a1, a2)
 	out := hex.EncodeToString(a3)
 	if err != nil {
 		log.Fatal("Panic", err)
@@ -63,7 +63,7 @@ func buildKey(key []byte, str []byte) []byte {
 func ASCIIXORHex(str1, str2 ASCIIstr) ASCIIstr {
 	a1 := []byte(str1)
 	a2 := []byte(str2)
-	a3, err := xorBytes(a1, a2)
+	a3, err := XorBytes(a1, a2)
 	out := hex.EncodeToString(a3)
 	if err != nil {
 		log.Fatal("Panic", err)
@@ -74,7 +74,7 @@ func ASCIIXORHex(str1, str2 ASCIIstr) ASCIIstr {
 func Base64XOR(str1, str2 Base64str) Base64str {
 	a1, _ := base64.StdEncoding.DecodeString(string(str1))
 	a2, _ := base64.StdEncoding.DecodeString(string(str2))
-	a3, err := xorBytes(a1, a2)
+	a3, err := XorBytes(a1, a2)
 	out := base64.StdEncoding.EncodeToString(a3)
 	if err != nil {
 		log.Fatal("Panic", err)
@@ -82,7 +82,7 @@ func Base64XOR(str1, str2 Base64str) Base64str {
 	return Base64str(out)
 }
 
-func xorBytes(a1, a2 []byte) ([]byte, error) {
+func XorBytes(a1, a2 []byte) ([]byte, error) {
 	if len(a1) != len(a2) {
 		return make([]byte, 0), errors.New(" XOR Bytes: mismatched byte slice lengths. ")
 	}
