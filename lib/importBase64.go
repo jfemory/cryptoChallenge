@@ -3,6 +3,7 @@ package lib
 import (
 	"bufio"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
 	"os"
 )
@@ -24,9 +25,9 @@ func ImportHex(file string) [][]byte {
 		if isPrefix != false {
 			break
 		}
-		temp = append(temp, line)
+		hexed, _ := hex.DecodeString(string(line))
+		temp = append(temp, hexed)
 	}
-	//convert base64 encoded string source file to []byte for further processing.
 	return temp
 }
 
